@@ -2,6 +2,8 @@
 
 ## Golang library for convenient configuration management
 
+![Go Version](https://img.shields.io/badge/go%20version-%3E=1.19-61CFDD.svg)
+
 # example
 
 ```

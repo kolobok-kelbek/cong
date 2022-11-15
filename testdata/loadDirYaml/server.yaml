@@ -1,0 +1,4 @@
+server:
+  name: ServerName
+  port: 80
+  timeout: 20

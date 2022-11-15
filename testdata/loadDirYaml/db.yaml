@@ -1,0 +1,3 @@
+db:
+  port: 3036
+  timeout: 10
