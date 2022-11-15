@@ -1,8 +1,9 @@
 package cong
 
 import (
-	"fmt"
 	"github.com/spf13/viper"
+	"os"
+	"path/filepath"
 )
 
 var defaultConfigPaths = []string{
@@ -21,9 +22,7 @@ func NewLoader[T any]() *Loader[T] {
 	}
 }
 
-func (loader *Loader[T]) Load(projectName string, ext ConfigExtension, configPaths ...string) *T {
-	config := new(T)
-
+func (loader *Loader[T]) Load(projectName string, ext ConfigExtension, configPaths ...string) (*T, error) {
 	loader.viper.SetConfigName(projectName)
 	loader.viper.SetEnvPrefix(projectName)
 
@@ -33,15 +32,69 @@ func (loader *Loader[T]) Load(projectName string, ext ConfigExtension, configPat
 
 	err := loader.viper.ReadInConfig()
 	if err != nil {
-		panic(fmt.Errorf("fatal error config file: %w", err))
+		return nil, err
 	}
 
+	config := new(T)
 	err = loader.viper.Unmarshal(config)
 	if err != nil {
-		fmt.Printf("unable to decode into config struct, %v", err)
+		return nil, err
 	}
 
-	return config
+	return config, nil
+}
+
+func (loader *Loader[T]) LoadDir(path string, ext ConfigExtension) (*T, error) {
+	configsPaths, err := loader.findConfigFilesInDir(path, ext)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, path := range configsPaths {
+		dir, file := filepath.Split(path)
+		configName := file[:len(file)-len(filepath.Ext(file))]
+		loader.viper.SetConfigName(configName)
+		loader.viper.SetConfigType(ext.String())
+		loader.viper.AddConfigPath(dir)
+		err := loader.viper.MergeInConfig()
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	config := new(T)
+	err = loader.viper.Unmarshal(config)
+	if err != nil {
+		return nil, err
+	}
+
+	return config, nil
+}
+
+func (loader *Loader[T]) findConfigFilesInDir(path string, ext ConfigExtension) ([]string, error) {
+	var configsPaths []string
+
+	absolutePath, err := filepath.Abs(path)
+	if err != nil {
+		return nil, err
+	}
+
+	err = filepath.Walk(absolutePath, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+
+		if !info.IsDir() && filepath.Ext(path) == "."+ext.String() {
+			configsPaths = append(configsPaths, path)
+		}
+
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return configsPaths, nil
 }
 
 func (loader *Loader[T]) loadConfigPaths(configPaths []string) {
