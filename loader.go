@@ -50,16 +50,9 @@ func (loader *Loader[T]) LoadDir(path string, ext ConfigExtension) (*T, error) {
 		return nil, err
 	}
 
-	for _, path := range configsPaths {
-		dir, file := filepath.Split(path)
-		configName := file[:len(file)-len(filepath.Ext(file))]
-		loader.viper.SetConfigName(configName)
-		loader.viper.SetConfigType(ext.String())
-		loader.viper.AddConfigPath(dir)
-		err := loader.viper.MergeInConfig()
-		if err != nil {
-			return nil, err
-		}
+	err = loader.loadConfigFilesByPaths(configsPaths, ext)
+	if err != nil {
+		return nil, err
 	}
 
 	config := new(T)
@@ -69,6 +62,22 @@ func (loader *Loader[T]) LoadDir(path string, ext ConfigExtension) (*T, error) {
 	}
 
 	return config, nil
+}
+
+func (loader *Loader[T]) loadConfigFilesByPaths(configsPaths []string, ext ConfigExtension) error {
+	for _, path := range configsPaths {
+		dir, file := filepath.Split(path)
+		configName := file[:len(file)-len(filepath.Ext(file))]
+		loader.viper.SetConfigName(configName)
+		loader.viper.SetConfigType(ext.String())
+		loader.viper.AddConfigPath(dir)
+		err := loader.viper.MergeInConfig()
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func (loader *Loader[T]) findConfigFilesInDir(path string, ext ConfigExtension) ([]string, error) {
