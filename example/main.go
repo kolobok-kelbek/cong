@@ -28,7 +28,7 @@ func main() {
 	fmt.Println(os.Getwd())
 
 	loader = cong.NewLoader[Config]()
-	data, err = loader.LoadDir("./configDir", cong.YamlExt)
+	data, err = loader.LoadFromDir("./configDir", cong.YamlExt)
 	if err != nil {
 		panic(fmt.Errorf("fatal error parce config: %w", err))
 	}

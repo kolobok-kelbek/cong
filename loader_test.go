@@ -31,7 +31,7 @@ func Test_Loader_Load(t *testing.T) {
 	as.Equal(config.Timeout, 20)
 }
 
-func Test_Loader_LoadDir(t *testing.T) {
+func Test_Loader_LoadFromDir(t *testing.T) {
 	as := assert.New(t)
 
 	type TestConfig struct {
@@ -52,7 +52,7 @@ func Test_Loader_LoadDir(t *testing.T) {
 
 	loader := NewLoader[TestConfig]()
 
-	config, err := loader.LoadDir("./testdata/loadDirYaml", YamlExt)
+	config, err := loader.LoadFromDir("./testdata/loadDirYaml", YamlExt)
 
 	as.Nil(err)
 	as.NotNil(config)
@@ -66,7 +66,7 @@ func Test_Loader_LoadDir(t *testing.T) {
 	as.Equal(config.Server.Timeout, 20)
 }
 
-func Test_Loader_LoadEmbed(t *testing.T) {
+func Test_Loader_LoadFromEmbed(t *testing.T) {
 	as := assert.New(t)
 
 	type TestConfig struct {
@@ -87,7 +87,7 @@ func Test_Loader_LoadEmbed(t *testing.T) {
 
 	loader := NewLoader[TestConfig]()
 
-	config, err := loader.LoadEmbed(embedTestData, YamlExt)
+	config, err := loader.LoadFromEmbedFS(embedTestData, YamlExt)
 
 	as.Nil(err)
 	as.NotNil(config)

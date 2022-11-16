@@ -46,7 +46,7 @@ func (loader *Loader[T]) Load(projectName string, ext ConfigExtension, configPat
 	return config, nil
 }
 
-func (loader *Loader[T]) LoadDir(path string, ext ConfigExtension) (*T, error) {
+func (loader *Loader[T]) LoadFromDir(path string, ext ConfigExtension) (*T, error) {
 	configsPaths, err := loader.findConfigFilesInDir(path, ext)
 	if err != nil {
 		return nil, err
@@ -66,8 +66,8 @@ func (loader *Loader[T]) LoadDir(path string, ext ConfigExtension) (*T, error) {
 	return config, nil
 }
 
-func (loader *Loader[T]) LoadEmbed(dir embed.FS, ext ConfigExtension) (*T, error) {
-	configsPaths, err := loader.findConfigFilesInEmbed(dir, ext)
+func (loader *Loader[T]) LoadFromEmbedFS(dir embed.FS, ext ConfigExtension) (*T, error) {
+	configsPaths, err := loader.findConfigFilesInEmbedFS(dir, ext)
 	if err != nil {
 		return nil, err
 	}
@@ -102,7 +102,7 @@ func (loader *Loader[T]) loadConfigFilesByPaths(configsPaths []string, ext Confi
 	return nil
 }
 
-func (loader *Loader[T]) findConfigFilesInEmbed(dir embed.FS, ext ConfigExtension) ([]string, error) {
+func (loader *Loader[T]) findConfigFilesInEmbedFS(dir embed.FS, ext ConfigExtension) ([]string, error) {
 	configsPaths := make([]string, 0)
 
 	err := fs.WalkDir(dir, ".", func(path string, info fs.DirEntry, err error) error {
