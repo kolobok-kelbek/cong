@@ -1,7 +1,9 @@
 package cong
 
 import (
+	"embed"
 	"github.com/spf13/viper"
+	"io/fs"
 	"os"
 	"path/filepath"
 )
@@ -64,6 +66,26 @@ func (loader *Loader[T]) LoadDir(path string, ext ConfigExtension) (*T, error) {
 	return config, nil
 }
 
+func (loader *Loader[T]) LoadEmbed(dir embed.FS, ext ConfigExtension) (*T, error) {
+	configsPaths, err := loader.findConfigFilesInEmbed(dir, ext)
+	if err != nil {
+		return nil, err
+	}
+
+	err = loader.loadConfigFilesByPaths(configsPaths, ext)
+	if err != nil {
+		return nil, err
+	}
+
+	config := new(T)
+	err = loader.viper.Unmarshal(config)
+	if err != nil {
+		return nil, err
+	}
+
+	return config, nil
+}
+
 func (loader *Loader[T]) loadConfigFilesByPaths(configsPaths []string, ext ConfigExtension) error {
 	for _, path := range configsPaths {
 		dir, file := filepath.Split(path)
@@ -80,8 +102,29 @@ func (loader *Loader[T]) loadConfigFilesByPaths(configsPaths []string, ext Confi
 	return nil
 }
 
+func (loader *Loader[T]) findConfigFilesInEmbed(dir embed.FS, ext ConfigExtension) ([]string, error) {
+	configsPaths := make([]string, 0)
+
+	err := fs.WalkDir(dir, ".", func(path string, info fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+
+		if !info.IsDir() && filepath.Ext(path) == "."+ext.String() {
+			configsPaths = append(configsPaths, path)
+		}
+
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return configsPaths, nil
+}
+
 func (loader *Loader[T]) findConfigFilesInDir(path string, ext ConfigExtension) ([]string, error) {
-	var configsPaths []string
+	configsPaths := make([]string, 0)
 
 	absolutePath, err := filepath.Abs(path)
 	if err != nil {
