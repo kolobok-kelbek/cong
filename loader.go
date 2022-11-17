@@ -26,11 +26,9 @@ func NewLoader[T any]() *Loader[T] {
 }
 
 func (loader *Loader[T]) Load(projectName string, ext ConfigExtension, configPaths ...string) (*T, error) {
-	loader.viper.SetConfigName(projectName)
-	loader.viper.SetEnvPrefix(projectName)
-	loader.viper.AutomaticEnv()
-	loader.viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
+	loader.setDefaultSettings(projectName)
 
+	loader.viper.SetConfigName(projectName)
 	loader.viper.SetConfigType(ext.String())
 
 	loader.loadConfigPaths(configPaths)
@@ -50,9 +48,8 @@ func (loader *Loader[T]) Load(projectName string, ext ConfigExtension, configPat
 }
 
 func (loader *Loader[T]) LoadFromDir(projectName string, path string, ext ConfigExtension) (*T, error) {
-	loader.viper.AutomaticEnv()
-	loader.viper.SetEnvPrefix(projectName)
-	loader.viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
+	loader.setDefaultSettings(projectName)
+
 	configsPaths, err := loader.findConfigFilesInDir(path, ext)
 	if err != nil {
 		return nil, err
@@ -73,9 +70,8 @@ func (loader *Loader[T]) LoadFromDir(projectName string, path string, ext Config
 }
 
 func (loader *Loader[T]) LoadFromEmbedFS(projectName string, dir embed.FS, ext ConfigExtension) (*T, error) {
-	loader.viper.AutomaticEnv()
-	loader.viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
-	loader.viper.SetEnvPrefix(projectName)
+	loader.setDefaultSettings(projectName)
+
 	configsPaths, err := loader.findConfigFilesInEmbedFS(dir, ext)
 	if err != nil {
 		return nil, err
@@ -93,6 +89,12 @@ func (loader *Loader[T]) LoadFromEmbedFS(projectName string, dir embed.FS, ext C
 	}
 
 	return config, nil
+}
+
+func (loader *Loader[T]) setDefaultSettings(projectName string) {
+	loader.viper.AutomaticEnv()
+	loader.viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
+	loader.viper.SetEnvPrefix(projectName)
 }
 
 func (loader *Loader[T]) loadConfigFilesByPaths(configsPaths []string, ext ConfigExtension) error {
