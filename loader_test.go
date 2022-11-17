@@ -34,7 +34,7 @@ func Test_Loader_Load(t *testing.T) {
 func Test_Loader_Load_withEnvReplace(t *testing.T) {
 	as := assert.New(t)
 
-	t.Setenv("HELLO_SERVERNAME", "PAM-PAM")
+	t.Setenv("HELLO_SERVER_NAME", "PAM-PAM")
 	t.Setenv("HELLO_PORT", "8080")
 
 	type TestConfig struct {

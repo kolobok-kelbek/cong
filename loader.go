@@ -6,7 +6,9 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strings"
+	"unicode"
 )
 
 var defaultConfigPaths = []string{
@@ -26,7 +28,11 @@ func NewLoader[T any]() *Loader[T] {
 }
 
 func (loader *Loader[T]) Load(projectName string, ext ConfigExtension, configPaths ...string) (*T, error) {
+	config := new(T)
+
 	loader.setDefaultSettings(projectName)
+
+	loader.bindSnakeCaseParams(config)
 
 	loader.viper.SetConfigName(projectName)
 	loader.viper.SetConfigType(ext.String())
@@ -38,7 +44,6 @@ func (loader *Loader[T]) Load(projectName string, ext ConfigExtension, configPat
 		return nil, err
 	}
 
-	config := new(T)
 	err = loader.viper.Unmarshal(config)
 	if err != nil {
 		return nil, err
@@ -48,7 +53,11 @@ func (loader *Loader[T]) Load(projectName string, ext ConfigExtension, configPat
 }
 
 func (loader *Loader[T]) LoadFromDir(projectName string, path string, ext ConfigExtension) (*T, error) {
+	config := new(T)
+
 	loader.setDefaultSettings(projectName)
+
+	loader.bindSnakeCaseParams(config)
 
 	configsPaths, err := loader.findConfigFilesInDir(path, ext)
 	if err != nil {
@@ -60,7 +69,6 @@ func (loader *Loader[T]) LoadFromDir(projectName string, path string, ext Config
 		return nil, err
 	}
 
-	config := new(T)
 	err = loader.viper.Unmarshal(config)
 	if err != nil {
 		return nil, err
@@ -70,6 +78,10 @@ func (loader *Loader[T]) LoadFromDir(projectName string, path string, ext Config
 }
 
 func (loader *Loader[T]) LoadFromEmbedFS(projectName string, dir embed.FS, ext ConfigExtension) (*T, error) {
+	config := new(T)
+
+	loader.bindSnakeCaseParams(config)
+
 	loader.setDefaultSettings(projectName)
 
 	configsPaths, err := loader.findConfigFilesInEmbedFS(dir, ext)
@@ -82,7 +94,6 @@ func (loader *Loader[T]) LoadFromEmbedFS(projectName string, dir embed.FS, ext C
 		return nil, err
 	}
 
-	config := new(T)
 	err = loader.viper.Unmarshal(config)
 	if err != nil {
 		return nil, err
@@ -95,6 +106,22 @@ func (loader *Loader[T]) setDefaultSettings(projectName string) {
 	loader.viper.AutomaticEnv()
 	loader.viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 	loader.viper.SetEnvPrefix(projectName)
+}
+
+func (loader *Loader[T]) bindSnakeCaseParams(config *T) {
+	refVal := reflect.ValueOf(config).Elem()
+
+	for i := 0; i < refVal.NumField(); i++ {
+		name := refVal.Type().Field(i).Name
+		fieldName := strings.ToUpper(name)
+		paramName := strings.ToUpper(loader.toSnakeCase(name))
+
+		if fieldName == paramName {
+			continue
+		}
+
+		loader.viper.SetEnvKeyReplacer(strings.NewReplacer(fieldName, paramName))
+	}
 }
 
 func (loader *Loader[T]) loadConfigFilesByPaths(configsPaths []string, ext ConfigExtension) error {
@@ -171,4 +198,25 @@ func (loader *Loader[T]) loadConfigPaths(configPaths []string) {
 	for _, path := range paths {
 		loader.viper.AddConfigPath(path)
 	}
+}
+
+func (loader *Loader[T]) toSnakeCase(s string) string {
+	var res = make([]rune, 0, len(s))
+	var p = '_'
+	for i, r := range s {
+		if !unicode.IsLetter(r) && !unicode.IsDigit(r) {
+			res = append(res, '_')
+		} else if unicode.IsUpper(r) && i > 0 {
+			if unicode.IsLetter(p) && !unicode.IsUpper(p) || unicode.IsDigit(p) {
+				res = append(res, '_', unicode.ToLower(r))
+			} else {
+				res = append(res, unicode.ToLower(r))
+			}
+		} else {
+			res = append(res, unicode.ToLower(r))
+		}
+
+		p = r
+	}
+	return string(res)
 }
