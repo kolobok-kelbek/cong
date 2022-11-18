@@ -84,7 +84,37 @@ func (loader *Loader[T]) LoadFromEmbedFS(projectName string, dir embed.FS, ext C
 
 	loader.setDefaultSettings(projectName)
 
-	configsPaths, err := loader.findConfigFilesInEmbedFS(dir, ext)
+	configsPaths, err := loader.findConfigFilesInEmbedFS(".", dir, ext)
+	if err != nil {
+		return nil, err
+	}
+
+	err = loader.loadConfigFilesByPaths(configsPaths, ext)
+	if err != nil {
+		return nil, err
+	}
+
+	err = loader.viper.Unmarshal(config)
+	if err != nil {
+		return nil, err
+	}
+
+	return config, nil
+}
+
+func (loader *Loader[T]) LoadFromEmbedFSByPath(
+	projectName string,
+	dir embed.FS,
+	path string,
+	ext ConfigExtension,
+) (*T, error) {
+	config := new(T)
+
+	loader.bindSnakeCaseParams(config)
+
+	loader.setDefaultSettings(projectName)
+
+	configsPaths, err := loader.findConfigFilesInEmbedFS(path, dir, ext)
 	if err != nil {
 		return nil, err
 	}
@@ -140,10 +170,10 @@ func (loader *Loader[T]) loadConfigFilesByPaths(configsPaths []string, ext Confi
 	return nil
 }
 
-func (loader *Loader[T]) findConfigFilesInEmbedFS(dir embed.FS, ext ConfigExtension) ([]string, error) {
+func (loader *Loader[T]) findConfigFilesInEmbedFS(path string, dir embed.FS, ext ConfigExtension) ([]string, error) {
 	configsPaths := make([]string, 0)
 
-	err := fs.WalkDir(dir, ".", func(path string, info fs.DirEntry, err error) error {
+	err := fs.WalkDir(dir, path, func(path string, info fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}

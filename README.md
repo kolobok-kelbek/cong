@@ -12,7 +12,7 @@ Additionally able to map CamelCase structure fields to SnakeCase environment var
 differently - field `ServerName` is going to be mapped with environment variable `SERVERNAME`.
 
 
-The interface has 3 loader methods, the choice depends on how you plan to load configuration files:
+The interface has 4 loader methods, the choice depends on how you plan to load configuration files:
 
 1. `Load(projectName string, ext ConfigExtension, configPaths ...string) (*T, error)` - downloads a single file by 
     project name and extension. The file is searched in directories by the passed paths or in default directories (".", 
@@ -22,6 +22,8 @@ The interface has 3 loader methods, the choice depends on how you plan to load c
     the passed extension are loaded and unmarshal.
 3. `LoadFromEmbedFS(projectName string, dir embed.FS, ext ConfigExtension) (*T, error)`-all files from the embed.FS 
     with the passed extension are loaded and unmarshal.
+4. `LoadFromEmbedFSByPath(projectName string, dir embed.FS, path string, ext ConfigExtension) (*T, error)`-all files by 
+    path from the embed.FS with the passed extension are loaded and unmarshal.
 
 # example
 
