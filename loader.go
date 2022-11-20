@@ -89,7 +89,7 @@ func (loader *Loader[T]) LoadFromEmbedFS(projectName string, dir embed.FS, ext C
 		return nil, err
 	}
 
-	err = loader.loadConfigFilesByPaths(configsPaths, ext)
+	err = loader.loadConfigFilesFromEmbedFsByPaths(configsPaths, dir, ext)
 	if err != nil {
 		return nil, err
 	}
@@ -119,7 +119,7 @@ func (loader *Loader[T]) LoadFromEmbedFSByPath(
 		return nil, err
 	}
 
-	err = loader.loadConfigFilesByPaths(configsPaths, ext)
+	err = loader.loadConfigFilesFromEmbedFsByPaths(configsPaths, dir, ext)
 	if err != nil {
 		return nil, err
 	}
@@ -156,11 +156,7 @@ func (loader *Loader[T]) bindSnakeCaseParams(config *T) {
 
 func (loader *Loader[T]) loadConfigFilesByPaths(configsPaths []string, ext ConfigExtension) error {
 	for _, path := range configsPaths {
-		dir, file := filepath.Split(path)
-		configName := file[:len(file)-len(filepath.Ext(file))]
-		loader.viper.SetConfigName(configName)
-		loader.viper.SetConfigType(ext.String())
-		loader.viper.AddConfigPath(dir)
+		loader.setConfigItemInfo(path, ext)
 		err := loader.viper.MergeInConfig()
 		if err != nil {
 			return err
@@ -168,6 +164,31 @@ func (loader *Loader[T]) loadConfigFilesByPaths(configsPaths []string, ext Confi
 	}
 
 	return nil
+}
+
+func (loader *Loader[T]) loadConfigFilesFromEmbedFsByPaths(configsPaths []string, dir embed.FS, ext ConfigExtension) error {
+	for _, path := range configsPaths {
+		data, err := dir.ReadFile(path)
+		if err != nil {
+			return err
+		}
+
+		loader.setConfigItemInfo(path, ext)
+		err = loader.viper.MergeConfig(strings.NewReader(string(data)))
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (loader *Loader[T]) setConfigItemInfo(path string, ext ConfigExtension) {
+	dirPath, file := filepath.Split(path)
+	configName := file[:len(file)-len(filepath.Ext(file))]
+	loader.viper.SetConfigName(configName)
+	loader.viper.SetConfigType(ext.String())
+	loader.viper.AddConfigPath(dirPath)
 }
 
 func (loader *Loader[T]) findConfigFilesInEmbedFS(path string, dir embed.FS, ext ConfigExtension) ([]string, error) {
