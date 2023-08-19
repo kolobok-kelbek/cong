@@ -2,6 +2,7 @@ package cong
 
 import (
 	"embed"
+	"fmt"
 	"github.com/spf13/viper"
 	"io/fs"
 	"os"
@@ -32,14 +33,17 @@ func (loader *Loader[T]) Load(projectName string, ext ConfigExtension, configPat
 
 	loader.setDefaultSettings(projectName)
 
-	loader.bindSnakeCaseParams(config)
+	err := loader.bindSnakeCaseParams(config, "", projectName)
+	if err != nil {
+		return nil, err
+	}
 
 	loader.viper.SetConfigName(projectName)
 	loader.viper.SetConfigType(ext.String())
 
 	loader.loadConfigPaths(configPaths)
 
-	err := loader.viper.ReadInConfig()
+	err = loader.viper.ReadInConfig()
 	if err != nil {
 		return nil, err
 	}
@@ -57,7 +61,10 @@ func (loader *Loader[T]) LoadFromDir(projectName string, path string, ext Config
 
 	loader.setDefaultSettings(projectName)
 
-	loader.bindSnakeCaseParams(config)
+	err := loader.bindSnakeCaseParams(config, "", projectName)
+	if err != nil {
+		return nil, err
+	}
 
 	configsPaths, err := loader.findConfigFilesInDir(path, ext)
 	if err != nil {
@@ -80,9 +87,12 @@ func (loader *Loader[T]) LoadFromDir(projectName string, path string, ext Config
 func (loader *Loader[T]) LoadFromEmbedFS(projectName string, dir embed.FS, ext ConfigExtension) (*T, error) {
 	config := new(T)
 
-	loader.bindSnakeCaseParams(config)
-
 	loader.setDefaultSettings(projectName)
+
+	err := loader.bindSnakeCaseParams(config, "", projectName)
+	if err != nil {
+		return nil, err
+	}
 
 	configsPaths, err := loader.findConfigFilesInEmbedFS(".", dir, ext)
 	if err != nil {
@@ -110,8 +120,6 @@ func (loader *Loader[T]) LoadFromEmbedFSByPath(
 ) (*T, error) {
 	config := new(T)
 
-	loader.bindSnakeCaseParams(config)
-
 	loader.setDefaultSettings(projectName)
 
 	configsPaths, err := loader.findConfigFilesInEmbedFS(path, dir, ext)
@@ -138,20 +146,40 @@ func (loader *Loader[T]) setDefaultSettings(projectName string) {
 	loader.viper.SetEnvPrefix(projectName)
 }
 
-func (loader *Loader[T]) bindSnakeCaseParams(config *T) {
-	refVal := reflect.ValueOf(config).Elem()
+func (loader *Loader[T]) bindSnakeCaseParams(config interface{}, prefix string, envPrefix string) error {
+	refVal := reflect.ValueOf(config)
+	if refVal.Kind() == reflect.Ptr {
+		refVal = refVal.Elem()
+	}
+	refType := refVal.Type()
 
 	for i := 0; i < refVal.NumField(); i++ {
-		name := refVal.Type().Field(i).Name
-		fieldName := strings.ToUpper(name)
-		paramName := strings.ToUpper(loader.toSnakeCase(name))
+		field := refType.Field(i)
+		name := field.Name
 
-		if fieldName == paramName {
+		tag, hasTag := field.Tag.Lookup("mapstructure")
+		if hasTag {
+			name = tag
+		}
+
+		fullName := name
+		if prefix != "" {
+			fullName = prefix + "." + name
+		}
+
+		if field.Type.Kind() == reflect.Struct {
+			if err := loader.bindSnakeCaseParams(refVal.Field(i).Interface(), fullName, envPrefix); err != nil {
+				return err
+			}
 			continue
 		}
 
-		loader.viper.SetEnvKeyReplacer(strings.NewReplacer(fieldName, paramName))
+		envVarName := strings.ToUpper(envPrefix + "_" + loader.toSnakeCase(fullName))
+		if err := loader.viper.BindEnv(fullName, envVarName); err != nil {
+			return fmt.Errorf("failed to bind environment variable for %s: %w", fullName, err)
+		}
 	}
+	return nil
 }
 
 func (loader *Loader[T]) loadConfigFilesByPaths(configsPaths []string, ext ConfigExtension) error {

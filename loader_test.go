@@ -397,6 +397,8 @@ func TestLoader_Load_HugeFile(t *testing.T) {
 		App AppConfig `mapstructure:"app"`
 	}
 
+	t.Setenv("HUGE_APP_CONFIG_NESTED_EXAMPLE_LEVEL1_LEVEL2_LEVEL3_LEVEL4_LEVEL5_KEY", "hip-hop")
+
 	loader := NewLoader[App]()
 
 	config, err := loader.Load("huge", YamlExt, "./testdata/loadYaml")
@@ -463,7 +465,7 @@ func TestLoader_Load_HugeFile(t *testing.T) {
 							Level3: Level3Config{
 								Level4: Level4Config{
 									Level5: Level5Config{
-										Key:        "deeply nested value",
+										Key:        "hip-hop",
 										Pi:         3.14159265359,
 										Enabled:    true,
 										List:       []string{"item1", "item2", "item3"},
