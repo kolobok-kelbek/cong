@@ -27,15 +27,33 @@ The interface has 4 loader methods, the choice depends on how you plan to load c
 
 # example
 
+```json
+{
+  "port": 80,
+  "timeout": "10s"
+}
 ```
+
+```golang
+package main
+
+import (
+	"encoding/json"
+	"fmt"
+	"github.com/kolobok-kelbek/cong"
+)
+
 type Config struct {
 	Port    int
-	Timeout int
+	Timeout string
 }
 
 func main() {
 	loader := cong.NewLoader[Config]()
-	data := loader.Load("example", cong.JsonExt)
+	data, err := loader.Load("config", cong.JsonExt)
+	if err != nil {
+		panic(err)
+	}
 
 	marshal, err := json.Marshal(data)
 	if err != nil {
@@ -44,4 +62,88 @@ func main() {
 
 	fmt.Println(string(marshal))
 }
+
+```
+
+# example with yaml
+
+```yaml
+serverName: HelloWorld
+port: 80
+timeout: 20
+```
+
+```golang
+package main
+
+import (
+	"encoding/json"
+	"fmt"
+	"github.com/kolobok-kelbek/cong"
+)
+
+type Config struct {
+	ServerName string `mapstructure:"serverName"`
+	Port       int    `mapstructure:"port"`
+	Timeout    string `mapstructure:"timeout"`
+}
+
+func main() {
+	loader := cong.NewLoader[Config]()
+	data, err := loader.Load("config", cong.YamlExt)
+	if err != nil {
+		panic(err)
+	}
+
+	marshal, err := json.Marshal(data)
+	if err != nil {
+		panic(fmt.Errorf("fatal error marshal config data: %w", err))
+	}
+
+	fmt.Println(string(marshal))
+}
+
+```
+
+# example with yaml and binding environment variables
+
+```yaml
+serverName: HelloWorld
+port: 80
+timeout: 20
+```
+
+```golang
+package main
+
+import (
+	"encoding/json"
+	"fmt"
+	"github.com/kolobok-kelbek/cong"
+	"os"
+)
+
+type Config struct {
+	ServerName string `mapstructure:"serverName"`
+	Port       int    `mapstructure:"port"`
+	Timeout    string `mapstructure:"timeout"`
+}
+
+func main() {
+	os.Setenv("CONFIG_SERVER_NAME", "pam-pam")
+
+	loader := cong.NewLoader[Config]()
+	data, err := loader.Load("config", cong.YamlExt)
+	if err != nil {
+		panic(err)
+	}
+
+	marshal, err := json.Marshal(data)
+	if err != nil {
+		panic(fmt.Errorf("fatal error marshal config data: %w", err))
+	}
+
+	fmt.Println(string(marshal))
+}
+
 ```
