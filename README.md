@@ -25,7 +25,9 @@ The interface has 4 loader methods, the choice depends on how you plan to load c
 4. `LoadFromEmbedFSByPath(projectName string, dir embed.FS, path string, ext ConfigExtension) (*T, error)`-all files by 
     path from the embed.FS with the passed extension are loaded and unmarshal.
 
-# example
+### Examples
+
+#### JSON
 
 ```json
 {
@@ -65,7 +67,7 @@ func main() {
 
 ```
 
-# example with yaml
+#### YAML
 
 ```yaml
 serverName: HelloWorld
@@ -105,7 +107,7 @@ func main() {
 
 ```
 
-# example with yaml and binding environment variables
+#### YAML and binding environment variables
 
 ```yaml
 serverName: HelloWorld
@@ -147,3 +149,5 @@ func main() {
 }
 
 ```
+
+> More examples you can find in [loader_test.go](loader_test.go)
