@@ -1,0 +1,68 @@
+app:
+  name: "My Super Application"
+  version: v1.2.3
+  description: This is a very long description of the application. It spans multiple lines and is intended to give an overview of what the application is and does.
+  metadata:
+    author: "Jane Doe"
+    email: "jane.doe@example.com"
+    year: 2023
+  features:
+    - authentication
+    - logging
+    - analytics
+  config:
+    database:
+      username: "dbuser"
+      password: "securepassword"
+      host: "localhost"
+      port: 5432
+      name: "mydatabase"
+      timeout: 10s
+    server:
+      host: "0.0.0.0"
+      port: 8080
+      cors:
+        enabled: true
+        allowedOrigins:
+          - "https://example1.com"
+          - "https://example2.com"
+        maxAge: 300s
+      ssl:
+        enabled: false
+        certificatePath: "/etc/ssl/certs/cert.pem"
+        privateKeyPath: "/etc/ssl/private/key.pem"
+    logs:
+      level: "info"
+      format: "json"
+      output:
+        - "stdout"
+        - "file"
+      file:
+        path: "/var/log/myapp.log"
+        maxsize: 100MB
+        maxbackups: 5
+        maxage: 30d
+    thirdParty:
+      google:
+        clientId: "google-client-id"
+        clientSecret: "google-client-secret"
+      facebook:
+        clientId: "facebook-app-id"
+        clientSecret: "facebook-app-secret"
+    nestedExample:
+      level1:
+        level2:
+          level3:
+            level4:
+              level5:
+                key: "deeply nested value"
+                pi: 3.14159265359
+                enabled: true
+                list:
+                  - item1
+                  - item2
+                  - item3
+                anotherKey: >
+                  This is another long text that
+                  is associated with 'anotherKey'
+                  in this deeply nested structure.
