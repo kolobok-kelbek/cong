@@ -6,6 +6,7 @@
 ![Go Version](https://img.shields.io/badge/go%20version-%3E=1.25-61CFDD.svg)
 [![Go Report Card](https://goreportcard.com/badge/github.com/kolobok-kelbek/cong)](https://goreportcard.com/report/github.com/kolobok-kelbek/cong)
 [![Go Reference](https://pkg.go.dev/badge/github.com/kolobok-kelbek/cong.svg)](https://pkg.go.dev/github.com/kolobok-kelbek/cong)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 The library inside uses [viper](https://github.com/spf13/viper)
 
