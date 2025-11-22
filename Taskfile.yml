@@ -1,0 +1,17 @@
+version: '3'
+
+tasks:
+  lint:
+    desc: Run golangci-lint with repo config
+    cmds:
+      - go tool golangci-lint run --timeout=3m --config .golangci.yml
+
+  lint-fix:
+    desc: Run golangci-lint with auto-fix (where supported)
+    cmds:
+      - go tool golangci-lint run --timeout=3m --fix --config .golangci.yml
+
+  test:
+    desc: Run unit tests
+    cmds:
+      - go test ./...

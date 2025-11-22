@@ -1,18 +1,29 @@
+version: "2"
 run:
   go: "1.25"
-  timeout: 3m
-
 linters:
   enable:
-    - errcheck
-    - gosimple
-    - govet
-    - ineffassign
-    - staticcheck
-    - typecheck
-    - unused
     - revive
+  disable:
+    - depguard
+  exclusions:
+    generated: lax
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
+formatters:
+  enable:
     - gofmt
     - goimports
-  disable:
-    - depguard # allow flexibility with imports
+  exclusions:
+    generated: lax
+    paths:
+      - third_party$
+      - builtin$
+      - examples$

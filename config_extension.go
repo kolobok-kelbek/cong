@@ -4,6 +4,7 @@ import "github.com/spf13/viper"
 
 type ConfigExtension int
 
+// nolint:revive
 const (
 	JsonExt ConfigExtension = iota
 	TomlExt
