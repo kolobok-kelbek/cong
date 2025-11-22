@@ -1,0 +1,22 @@
+name: Test
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    container:
+      image: golang:1.25-alpine
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install git
+        run: apk add --no-cache git
+
+      - name: Run tests
+        env:
+          GOPROXY: https://proxy.golang.org,direct
+        run: go test ./...
