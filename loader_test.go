@@ -59,6 +59,31 @@ func Test_Loader_Load_withEnvReplace(t *testing.T) {
 	})
 }
 
+func Test_Loader_LoadFromEnv(t *testing.T) {
+	as := assert.New(t)
+
+	t.Setenv("HELLO_SERVER_NAME", "PAM-PAM")
+	t.Setenv("HELLO_PORT", "8080")
+	t.Setenv("HELLO_TIMEOUT", "30")
+
+	type TestConfig struct {
+		ServerName string
+		Port       int
+		Timeout    int
+	}
+
+	loader := NewLoader[TestConfig]()
+
+	config, err := loader.LoadFromEnv("hello")
+
+	as.Nil(err)
+	as.Equal(&TestConfig{
+		ServerName: "PAM-PAM",
+		Port:       8080,
+		Timeout:    30,
+	}, config)
+}
+
 func Test_Loader_LoadFromDir(t *testing.T) {
 	as := assert.New(t)
 
@@ -282,6 +307,54 @@ func Test_Loader_LoadFromEmbedByPath(t *testing.T) {
 		Server: Server{
 			Name:    "ServerName",
 			Port:    80,
+			Timeout: 20,
+		},
+	})
+}
+
+func Test_Loader_LoadFromEmbedByPath_withEnvReplace(t *testing.T) {
+	as := assert.New(t)
+
+	t.Setenv("HELLO_APP_NAME", "APP-NAME")
+	t.Setenv("HELLO_SERVER_NAME", "PAM-PAM")
+	t.Setenv("HELLO_SERVER_PORT", "8080")
+
+	type App struct {
+		Name        string
+		Description string
+	}
+	type Db struct {
+		Port    int
+		Timeout int
+	}
+	type Server struct {
+		Name    string
+		Port    int
+		Timeout int
+	}
+	type TestConfig struct {
+		App    App
+		Db     Db
+		Server Server
+	}
+
+	loader := NewLoader[TestConfig]()
+
+	config, err := loader.LoadFromEmbedFSByPath("hello", embedFullTestData, "testdata/loadDirYaml", YamlExt)
+
+	as.Nil(err)
+	as.Equal(config, &TestConfig{
+		App: App{
+			Name:        "APP-NAME",
+			Description: "This is gorgeous application",
+		},
+		Db: Db{
+			Port:    3036,
+			Timeout: 10,
+		},
+		Server: Server{
+			Name:    "PAM-PAM",
+			Port:    8080,
 			Timeout: 20,
 		},
 	})

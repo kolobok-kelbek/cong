@@ -24,6 +24,8 @@ The interface has 4 loader methods, the choice depends on how you plan to load c
     with the passed extension are loaded and unmarshal.
 4. `LoadFromEmbedFSByPath(projectName string, dir embed.FS, path string, ext ConfigExtension) (*T, error)`-all files by 
     path from the embed.FS with the passed extension are loaded and unmarshal.
+5. `LoadFromEnv(projectName string) (*T, error)` - fills config only from environment variables, which is handy for 
+    Twelve-Factor applications where no config files should be mounted.
 
 ### Examples
 
@@ -62,9 +64,45 @@ func main() {
 		panic(fmt.Errorf("fatal error marshal config data: %w", err))
 	}
 
-	fmt.Println(string(marshal))
+fmt.Println(string(marshal))
 }
 
+```
+
+### Twelve-Factor / env-only usage
+
+If you don't want to ship any config files (12-factor style), you can populate the config only from environment variables:
+
+```golang
+package main
+
+import (
+	"encoding/json"
+	"fmt"
+	"github.com/kolobok-kelbek/cong"
+	"os"
+)
+
+type Config struct {
+	ServerName string
+	Port       int
+	Timeout    int
+}
+
+func main() {
+	os.Setenv("HELLO_SERVER_NAME", "pam-pam")
+	os.Setenv("HELLO_PORT", "8080")
+	os.Setenv("HELLO_TIMEOUT", "30")
+
+	loader := cong.NewLoader[Config]()
+	cfg, err := loader.LoadFromEnv("hello")
+	if err != nil {
+		panic(err)
+	}
+
+	b, _ := json.Marshal(cfg)
+	fmt.Println(string(b))
+}
 ```
 
 #### YAML

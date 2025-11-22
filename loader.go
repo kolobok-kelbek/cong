@@ -3,13 +3,14 @@ package cong
 import (
 	"embed"
 	"fmt"
-	"github.com/spf13/viper"
 	"io/fs"
 	"os"
 	"path/filepath"
 	"reflect"
 	"strings"
 	"unicode"
+
+	"github.com/spf13/viper"
 )
 
 var defaultConfigPaths = []string{
@@ -122,6 +123,11 @@ func (loader *Loader[T]) LoadFromEmbedFSByPath(
 
 	loader.setDefaultSettings(projectName)
 
+	err := loader.bindSnakeCaseParams(config, "", projectName)
+	if err != nil {
+		return nil, err
+	}
+
 	configsPaths, err := loader.findConfigFilesInEmbedFS(path, dir, ext)
 	if err != nil {
 		return nil, err
@@ -134,6 +140,24 @@ func (loader *Loader[T]) LoadFromEmbedFSByPath(
 
 	err = loader.viper.Unmarshal(config)
 	if err != nil {
+		return nil, err
+	}
+
+	return config, nil
+}
+
+// LoadFromEnv fills config only from environment variables using snake_case bindings with the given project prefix.
+// It is useful for Twelve-Factor applications where configuration is expected to come from the environment.
+func (loader *Loader[T]) LoadFromEnv(projectName string) (*T, error) {
+	config := new(T)
+
+	loader.setDefaultSettings(projectName)
+
+	if err := loader.bindSnakeCaseParams(config, "", projectName); err != nil {
+		return nil, err
+	}
+
+	if err := loader.viper.Unmarshal(config); err != nil {
 		return nil, err
 	}
 
