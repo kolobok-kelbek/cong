@@ -1,0 +1,6 @@
+app:
+  name: EmbeddedApp
+  description: Loaded from embed.FS
+server:
+  port: 9090
+  timeout: 15
