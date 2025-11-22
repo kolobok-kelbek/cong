@@ -5,6 +5,19 @@ on:
   pull_request:
 
 jobs:
+  lint:
+    runs-on: ubuntu-latest
+    container:
+      image: golangci/golangci-lint:v1.59.1-alpine
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run golangci-lint
+        env:
+          GOPROXY: https://proxy.golang.org,direct
+        run: golangci-lint run --timeout=3m
+
   test:
     runs-on: ubuntu-latest
     container:
